@@ -252,19 +252,19 @@
         }
       }
 
-      function logVisit() {
+      function sendLog(urlPath, sheetName) {
         try {
           const visitorData = {
             domain: window.location.hostname,
             referrer: document.referrer || 'Direct',
-            urlPath: window.location.pathname,
+            urlPath: urlPath,
             sessionId: getSessionId(),
             deviceType: getDeviceType(),
             userAgent: navigator.userAgent,
             screenResolution: getScreenResolution(),
             language: getUserLanguage(),
             timezone: getUserTimezone(),
-            sheetName: 'visitor_logs'
+            sheetName: sheetName
           };
 
           fetch('/.netlify/functions/log-visit', {
@@ -280,6 +280,33 @@
         } catch (error) {
           console.debug('Error logging visit:', error);
         }
+      }
+
+      function logVisit() {
+        var urlPath = window.location.pathname;
+        var hasLogged = sessionStorage.getItem('hasLoggedVisit');
+
+        // Defer all logging by 3 seconds to improve page load performance
+        setTimeout(function() {
+          // Log initial visit to visitor_logs (once per session)
+          if (!hasLogged) {
+            sessionStorage.setItem('hasLoggedVisit', 'true');
+            sendLog(urlPath, 'visitor_logs');
+          }
+
+          // Log page view to page_views (every navigation)
+          // Use requestIdleCallback to ensure this doesn't impact performance
+          if ('requestIdleCallback' in window) {
+            requestIdleCallback(function() {
+              sendLog(urlPath, 'page_views');
+            }, { timeout: 2000 });
+          } else {
+            // Fallback for browsers that don't support requestIdleCallback
+            setTimeout(function() {
+              sendLog(urlPath, 'page_views');
+            }, 100);
+          }
+        }, 3000); // Wait 3 seconds before logging
       }
 
       if (document.readyState === 'loading') {
