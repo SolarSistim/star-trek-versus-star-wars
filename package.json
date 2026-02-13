@@ -1,0 +1,9 @@
+{
+  "name": "star-trek-versus-star-wars",
+  "version": "1.0.0",
+  "description": "Star Trek vs Star Wars - The ultimate franchise comparison",
+  "private": true,
+  "dependencies": {
+    "googleapis": "^144.0.0"
+  }
+}
